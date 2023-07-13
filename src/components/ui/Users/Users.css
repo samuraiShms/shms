@@ -1,0 +1,132 @@
+.users {
+	display: flex;
+	flex-direction: column;
+	gap: 40px;
+	min-height: 100%;
+	flex: 1 1 auto;
+}
+
+.users__block {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	justify-content: center;
+}
+
+.users__left,
+.users__right {
+	padding: 6px 20px;
+	border-radius: 10px;
+	background-color: #fff;
+	color: #111;
+}
+
+.user {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-start;
+	gap: 10px;
+}
+
+.user__body {
+	display: flex;
+	align-items: center;
+	gap: 30px;
+	margin-bottom: 10px;
+}
+
+.user__info {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.user__name {
+	font-size: 18px;
+	line-height: calc(20 / 18 * 100%);
+	color: #b9b9b9;
+	font-weight: 600;
+}
+
+.user__description {
+	color: #3b3b3b;
+	font-size: 16px;
+	line-height: calc(24 / 16 * 100%);
+	font-weight: 400;
+}
+
+.user__location-label {
+	font-size: 16px;
+	line-height: calc(20 / 16 * 100%);
+	color: #b9b9b9;
+	font-weight: 600;
+	margin-bottom: 10px;
+}
+
+.user__location {}
+
+.user__location-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	position: relative;
+	gap: 10px;
+}
+
+.user__location-item span {
+	font-size: 14px;
+	opacity: 0.5;
+	color: #fff;
+	position: relative;
+	display: inline-block;
+}
+
+.user__location-items {
+	display: flex;
+	flex-direction: column;
+}
+
+.user__location-filter {
+	flex: 1 1 auto;
+	height: 2px;
+	background-color: #fff;
+	min-width: 40px;
+	opacity: 0.5;
+}
+
+.users__pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.users__items {
+	gap: 30px;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+
+.pagination__button {
+	cursor: pointer;
+	margin: 0px 10px;
+	color: #c4c4c4;
+	font-size: 18px;
+	line-height: 0;
+	transition: color, background-color 0.3s ease 0s;
+	background-color: #fff;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+}
+
+.pagination__button.active {
+	font-weight: 700;
+	color: #999999;
+	transition: color, background-color 0.3s ease 0s;
+	background-color: #ffcaca;
+}

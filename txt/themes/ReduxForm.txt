@@ -1,0 +1,267 @@
+У на странице может быть много инпутов, и нам на каждый получается нужно заводить action creator и каждому хранить значение в state
+Но это слишком долго,и неубодно, тут нам поможет библиотека redux-form которая будет это делать за нас
+
+
+Как это сделать?
+
+
+Для начала добавим саму библиотеку
+
+yarn add redux-form || npm i -D redux-form 
+
+
+Далее в redux добавим formReducer импортировав его из библиотеки
+
+import { reducer as formReducer } from "redux-form";
+let reducers = combineReducers({
+	form: formReducer
+}) 
+
+Главное запомнить, что в state должно храниться именно form, а не другое значение
+т.к. библиотека так устроена
+
+Далее мы обвернем как connect нашу форму, чтобы redux-form уже работал с ней
+данным образом
+
+const containerForm = reduxForm({ form: 'uniqal name' })(form)
+
+и также в первом вызове мы в объекте добавляем уникальное имя форме
+а вторым вызовом как в connect добавляем компоненту
+
+следующим шагом надо заменить все input на тег field, т.к. в данной библиотеке так устроено
+
+И вот таким образом
+
+<input type="checkbox" name="checkbox" />
+/* ----------------------------------- */
+<Field component={"input"} placeholder={"name"} />
+
+То тег input меняем на Field и просто в component передаем тег (input/textarea ...)
+
+И прежде конечно импорт:
+
+import Field from 'redux-form';
+
+также эти Field надо дать название (name)
+например:
+
+<Field component={"input"} name={"name"} placeholder={"name"} />
+и под этими name будет храниться value 
+
+
+Также с помощью containerForm передаётся в нашу форму много пропсов, например anyTouched, что означает
+был ли фокус на форме
+И другие
+
+И если мы добавим форме событие 
+
+
+
+const LoginForm = (props) => {
+	return <form onSubmit={props.handleSubmit}">
+
+	</form>
+}
+
+export default LoginForm
+
+то props.handleSubmit сделает следующее
+
+1. e.preventDefault()
+2. Возьмёт все данные и упакует в объект
+3. props.onSubmit(передает данные которые упаковали)
+
+Но нужно плюсом в контейнерной компоненте (reduxForm) тоже передать handleSubmit т.к.
+В нашей форме сделаются эти три действия и попадут в контейнерную компоненту
+
+и получится так
+
+const Login = () => {
+	const submitData = (formData) => {
+		console.log(formData)
+	}
+	return (
+		<>
+			<h2 className="form-login__title">
+				Login
+			</h2>
+			<LoginReduxForm onSubmit={submitData} />
+		</>
+	)
+
+}
+
+
+теперь разберем пример добавления сообщений
+
+
+мы хранили значение инпута (который отвечал за текст сообщения) в state
+и при клике на кнопку мы диспатчили в state значение этого инпута
+
+А сейчас будем использовать redux-form библиотеку, и тут мы будем немного по другому, напоминаю
+принцип работы redux-form
+
+1. Вынесли форму в отдельную компоненту
+2. Поменяли инпуты на Field
+3. Форме навесили событие onSubmit и в него положили props.handleSubmit
+4. Обвернули компоненту с формой в reduxForm 
+5. Создали функцию с помощью которой будем получать данные с формы, и будем данную функцию передавать в контейнерную копоненту формы
+передавать в событие onSubmit
+
+так вот, мы просто у проделаем данную операцию, и не при клике на кнопку будем вызывать action creator а при событии onSubmit у формы
+а оно в свою очередь будет вызываться после нажатия на кнопку
+
+так вот, после мы будем с помощью функции получать данные с формы, и диспатчить при onSubmit в state,и там уже добавлять сообщение
+
+но только в state мы обнуляли значение инпута просто обращаясь к state, но сейчас то за нас flux круговорот делает библиотека
+и поэтому надо использовать методы очищения формы из самой библиотеки
+
+
+Redux Form Validation
+
+- Валидация 
+
+
+для валидации создадим отдельную папку
+
+utils (утилиты)
+> validators
+> validator.js
+
+
+и в нем свои валидаторы
+
+
+допустим required
+
+export const required = (value) => {
+	return (value ? undefined : "Field required")
+}
+если value есть, то undefined или ...
+
+
+и допустим maxLengthCreator
+
+И тут мы будем использовать замыкание, чтобы передавать maxLength
+
+
+export const maxLengthCreator = (maxLength) => {
+	return (value) => {
+		if (value && value.length > maxLength) {
+			return `max length: ${maxLength}`
+		} else {
+			return undefined
+		}
+	}
+}
+
+и потом на field который хотим обработать вешаем атрибут validate и в массиве
+передаем валидаторы, и они сами вызовутся библиотекой redux form 
+и допустим в required будет передавать value а maxLengthCreator мы сами вызовем и передадим maxLength для того чтобы не писать для каждой
+длины свой валидатор
+
+и получится такое 
+<Field validate={[required, maxLengthCreator(10)]} />
+
+Но будет ошибка при вызове maxLengthCreator и поэтому вынесем в отдельную переменную
+
+const maxLengthSource = maxLengthCreator(10)
+
+<Field validate={[required, maxLengthSource]} />
+
+
+Также забыл сказать когда мы закидываем в component в Field то мы можем закинуть компоненту, которую отрисует Field
+
+
+И вот для валидации я знаю (из верстки) что нужно обвернуть инпут в див и там уже добавлять стили или иконки и т.д.
+для этого создадим компоненту которая будет отрисовывать input 
+
+
+В input хранится все функции (onBlur ...)
+В мета хранится всякие штуки по типу, нажимали ли мы на инпут и т.д.
+И в самих пропсах хранится placeholder type, или же то, что мы передали в Field атрибутах
+
+И вот как textarea подключить то, а мы только что сказали, что Field отрисовывает компоненту, туда и засунем
+const Input = ({input, meta, ...props}) => {
+	return (
+		<>
+			<textarea {...input} {...props}></textarea>
+		</>
+	)
+}
+
+P.S про rest оператор в JSCheats.txt (6)
+
+а для чего мы выносим input и meta, а потому что лишнего ничего не надо передавать в textarea
+
+так вот про валидацию
+
+вот сделаем так
+
+создадим переменную hasError чтобы не дублировать код
+
+а потом если hasError сработает то будем добавлять класс error к input 
+и добавлять текст ошибки
+
+и напоминаю meta.error зависит от наших валидаторов
+export const Textarea = ({ input, meta, ...props }) => {
+	const hasError = meta.error && meta.touched
+	return (
+		<div className={hasError ? "error" : ""}>
+			<textarea {...input} {...props}></textarea>
+			{hasError && <div><span className="error">Error</span></div>}
+		</div>
+	)
+}
+
+
+(79 lesson)
+
+теперь мы сделали логинизацию
+
+но если мы неправильно ввели логин или пароль, то просто ничего не происходит
+даже нету ошибки
+
+и чтобы это исправить в нашей санке, которую мы выполняем при submit на форме мы добавим stopSubmit
+этот метод останавливает отправку формы в случае ошибки,и там первым параметром мы передаём уникальное название формы 
+а вторым передаём name инпута, у которого нужно показать ошибку
+
+и всё это будет выглядеть так:
+
+
+const submit = () => {
+	return (dispatch) => {
+		const action = stopSubmit('login', { email: 'Email is wrong' })
+		dispatch(action)
+	}
+}
+
+
+Но мы хотим показать ошибку всей формы, то есть написать:
+
+E-mail or password is wrong чтобы злоумышленнику было сложнее подбирать те или иные данные 
+и для этого в stopSubmit вторым параметром мы передадим _error и текст в него, который будет показан при ошибке 
+
+И этот _error означает что возникла любая ошибка, а далее 
+в компоненте формы приходит в пропсы error это как раз наша ошибка и для того чтобы её вывести добавим условие 
+
+{props.error && <div className='error'>{props.error}</div> }
+
+
+а если мы хотим получать ошибки с апишки то просто где мы делаем условие resultCode === 0 добавим else и там напишем:
+
+if (response.resultCode === 0){
+
+} else {
+	dispatch(stopSubmit('login', {_error: response.data.messages}))
+}
+
+
+
+
+чтобы занулить инпуты то при onSubmit вызываем метод из пропсов reset и вего уникальное имя формы
+onSubmit={(e) => {
+		props.handleSubmit()
+		props.reset('postsForm')
+		e.preventDefault()
+}}

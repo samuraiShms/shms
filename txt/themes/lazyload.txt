@@ -1,0 +1,41 @@
+У нас проблема, что мы наше приложение полностью подгружаем, а нам нужно подгружать части по мере надобности
+
+Тут поможет lazy И suspense
+
+Как работать
+
+
+Импортируем компоненту не как обычно, а таким образом
+
+
+
+const Component = lazy(() => import("путь"))
+
+и потом где нужно используем эту компоненту, но немного иначе:
+
+
+<Suspense fallback={<div>Load...</div>}>
+	<Component {...props} />
+</Suspense>
+
+в fallback можно передать то, что будет во время загрузки компоненты
+
+и теперь напишем свой хок для Suspense
+
+
+import { Suspense } from "react"
+const withLazy = (Component) => {
+
+	const Container = (props) => {
+		return <Suspense fallback={<div className="loader">
+			<img img={"/src/img/loader.gif"} alt="load..." />
+		</div>}>
+			<Component {...props} />
+		</Suspense>
+	}
+
+	return Container
+}
+
+export default withLazy
+

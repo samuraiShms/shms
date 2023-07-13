@@ -1,0 +1,128 @@
+let store = {
+	_rerenderTree: '',
+	_state: {
+		profile: {
+			postsData: [
+				{
+					"id": 1,
+					"From": 'Kirill',
+					"Message": 'Lorem'
+				},
+				{
+					"id": 2,
+					"From": 'Kirill2',
+					"Message": 'Lorem'
+				},
+				{
+					"id": 3,
+					"From": 'Kirill3',
+					"Message": 'Lorem'
+				},
+			],
+
+			"newPostName": '',
+			"newPostText": '',
+
+		},
+		messages: {
+			interlocutorsData: [
+				{
+					"id": 1,
+					"text": 'Kirill',
+				},
+				{
+					"id": 2,
+					"text": 'Viktor',
+				},
+				{
+					"id": 3,
+					"text": 'Name',
+				},
+				{
+					"id": 4,
+					"text": 'Dmitry',
+				},
+			],
+			messagesData: [
+				{
+					"id": 1,
+					"name": '...',
+					"text": 'lorem ipsum',
+				},
+				{
+					"id": 2,
+					"name": '...',
+					"text": 'lorem ipsum',
+				},
+				{
+					"id": 3,
+					"name": '...',
+					"text": 'lorem ipsum',
+				},
+				{
+					"id": 4,
+					"name": '...',
+					"text": 'lorem ipsum',
+				},
+			],
+			"newInterLocutor": '',
+		}
+	},
+	getState() {
+		return this._state;
+	},
+	callback(observer) {
+		this._rerenderTree = observer
+	},
+	dispatch(action) {
+		if (action.type === 'ADD-POST') {
+			let newPost = {
+				"id": this._state.profile.postsData.length + 1,
+				"From": this._state.profile.newPostName,
+				"Message": this._state.profile.newPostText
+			}
+			this._state.profile.postsData.push(newPost)
+			this._rerenderTree()
+		} else if (action.type === 'CHANGE-TEXT') {
+			this._state.profile.newPostText = action.value;
+			this._rerenderTree()
+		} else if (action.type === 'CHANGE-NAME') {
+			this._state.profile.newPostName = action.value;
+			this._rerenderTree()
+		} else if (action.type === 'ADD-DIALOG') {
+			if (this._state.messages.newInterLocutor.length > 0) {
+				let interlocutor = {
+					"id": this._state.messages.interlocutorsData.length + 1,
+					"text": this._state.messages.newInterLocutor
+				}
+				let message = {
+					"id": this._state.messages.messagesData.length + 1,
+					"name": "...",
+					"text": "lorem",
+				}
+				this._state.messages.interlocutorsData.push(interlocutor)
+				this._state.messages.messagesData.push(message)
+				this._state.messages.newInterLocutor = ''
+			}
+
+			this._rerenderTree()
+		} else if (action.type === 'CHANGE-VALUE-INTERLOCUTOR') {
+			this._state.messages.newInterLocutor = action.value
+			this._rerenderTree()
+		}
+	}
+}
+export const changeTextActionCreater = (value) => {
+	return {
+		'type': 'CHANGE-TEXT',
+		'value': value
+	}
+}
+export const changeNameActionCreater = (value) => {
+	return {
+		'type': 'CHANGE-NAME',
+		'value': value
+	}
+}
+export default store;
+

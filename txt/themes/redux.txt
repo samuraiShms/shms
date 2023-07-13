@@ -1,0 +1,328 @@
+вот он долгожданный redux
+Сначала добавим - yarn add redux
+
+
+Redux - предоставляет возможность создать store
+
+Для этого:
+
+import { createStore } from 'redux';
+
+let store = createStore()
+
+
+далее нам нужно создать reducers
+Но они у нас уже готовы, нам нужно просто использовать метод для передачи в store
+
+import { combineReducers } from "redux";
+import profileReducer from './reducers/profileReducer';
+import messagesReducer from './reducers/messagesReducer';
+let reducers = combineReducers({
+	profile: profileReducer,
+	messages: messagesReducer,
+})
+
+то есть мы даём им название, и передаем
+И предварительно не забываем это всё дело импортировать
+и стоит упомянуть, что эти названия profile, messages, будут храниться в state то есть 
+let store = {
+	state: {
+		profile: {
+			...
+		}
+	}
+}
+Как то так
+
+и потом просто передаем в store 
+
+let store = createStore(reducers)
+
+далее мы сделаем перерисовку дерева, она как бы уже готова, но нужно чуть изменить
+
+Во-первых - в redux метод для получения callback функции - subscribe
+
+поэтому мы обращаемся к store.subscribe()
+
+и передаем как анонимную функцию нашу rerenderTree
+
+store.subscribe(() => {
+	rerenderTree(store.getState())
+})
+
+и не забываем передать туда state, специальным методом redux - store.getState()
+
+
+Также стоит отметить, что в reducer'ах и хранится наш state
+
+Но, вначале redux не передает в редусеры state, т.к. у него идёт инициализация, поэтому мы сделаем так:
+
+let initialState = {
+	newPostText: '',
+}
+
+
+let reducer = (state = initialState, action) => {
+
+}
+
+то есть мы изначально передаём в state (если в него не передан state) свою часть state
+
+
+
+Container Component vs presentational
+
+Контейнерная компонента
+
+Суть в том, что в презентационную или же тупую компоненту, у которой цель отрисовать
+Мы передаём dispatch, то есть по сути связь со store с business, а это плохо со стороны чистого программирования
+то есть тупая компонента или же презентационная, должна просто отрисовывать
+
+Поэтому мы будем делать для каждой компоненты свой контейнер, который уже может получать dispatch и т.д.
+то есть он выполняет функцию, которая возвращает презентационную компоненту, и передаёт в нее не весь dispatch, а только нужную его часть
+
+Вот пример контейнерной компоненты
+
+const MessagesContainer = (props) => {
+	let actionsMessages = {
+		changeValueMessage: (text) => {
+			props.dispatch(changeValueMessageActionCreator(text));
+		},
+		addMessage: () => {
+			props.dispatch(addMessageActionCreater())
+		},
+	}
+	return (
+		<Messages actionsMessages={actionsMessages} messages={props.messages} /> //Здесь презентационная компонентаx
+	)
+}
+
+Но не нужно каждую компоненту обворачивать в контейнер
+Только те, которые функциональные, то есть выполняют что-то связанное со store или имеют доступ к dispatch
+
+
+
+И также контейнеры нужны чтобы настоящие компоненты получали только те данные, которые ей нужны
+А раньше мы передавали целый dispatch в презентационную компоненту
+
+
+
+Context 
+
+У нас есть такая проблема, а точнее недочёт, что мы через пропсы передаём целый store, то есть
+через App потом Page потом Profile а потом только туда, где store нужен, это не очень хорошо
+И нам поможет Context
+Но пока мы это делаем в качестве ознакомления, потому что потом мы подключим connect который это всё будет делать за нас в скрытом виде
+
+Итак приступим:
+
+Создадим файл context.js 
+в нём сам context
+
+const MyContext = React.createContext()
+
+А потом в createContext передадим то, что будем там хранитьс ПО УМОЛЧАНИЮ - store
+
+
+И чтобы он работал, мы должны обвернуть ту часть кода в <MyContext.Provider></MyContext.Provider>
+которая хочет пользоваться контекстом или же store
+
+в нашем случае 
+<MyContext.Provider>
+	<App />
+</MyContext.Provider>
+
+а теперь уже в value передаём то, что будет храниться НЕ ПО УМОЛЧАНИЮ
+
+
+<MyContext.Provider value={store}>
+	<App />
+</MyContext.Provider>
+
+
+и чтобы обратиться из какого либо компонента к этому контексту
+
+И дальше в конпоненте return'им 
+
+<MyContext.Consumer>
+{
+	(store) => {
+		// тут любые действия типо какие либо функции
+
+		 // а после 
+		return <Component и передаем сюда пропсы />
+	}
+}
+</MyContext.Consumer>
+
+
+Пример:
+	return (
+		<MyContext.Consumer>
+			{
+				(store) => {
+					let actionsPosts = {
+						changeText: (text) => {
+							store.dispatch(changeTextActionCreater(text))
+						},
+						changeName: (text) => {
+							store.dispatch(changeNameActionCreater(text))
+						},
+						changeTextClear: (text) => {
+							store.dispatch(changeTextActionCreater(text))
+						},
+						changeNameClear: (text) => {
+							store.dispatch(changeNameActionCreater(text))
+						},
+						addPost: () => {
+							store.dispatch({ 'type': 'ADD-POST' })
+						},
+
+					}
+					return <Posts posts={store.getState().profile} actionsPosts={actionsPosts} />
+				}
+			}
+		</MyContext.Consumer>
+
+	)
+
+Но сейчас можно вместо этого <MyContext.Consumer></MyContext.Consumer>
+использовать хук useContext таким образом
+
+let value = useContext(MyContext);
+
+и в нашем случае value будет равен store и к нему уже обращаемся
+
+Дальше поговорим о библиотеке react-redux
+
+
+connect
+
+
+мы создаём нашу контейнерную компоненту для того
+чтобы ЗАКОННЕКТИТЬ с презентационной компонентой
+
+И также нужно App обвернуть в 
+<Provider store={store}>
+
+</Provider>
+
+И нужно нам это затем, чтобы:
+Во-первых в контейнерной компоненте мы можем хранить state и dispatch
+Во-вторых для самих контейнерных компонент
+
+И вот как это всё работает?
+
+мы делаем два объекта 
+mapStateToProps и mapDispatchToProps
+Первый передаёт state
+Второй функции или же dispatch
+
+Поговорим о каждой из них
+
+mapStateToProps
+
+функция - возвращающая ту часть state, которую мы укажем
+
+Работает так: в параметрах получает сам state
+и возвращает объект с частью state
+
+Например:
+let mapStateToProps = (state) => {
+	return {
+		messages: state.messages
+	}
+}
+
+mapDispatchToProps
+
+функция - возвращающая dispatch в который мы передаем объект или creator и в redux он уже обрабатывается по определённым условиям
+и также получает сам dispatch, а мы же просто туда передаём ибо creator или сами пишем объект 
+
+пример:
+let mapDispatchToProps = (dispatch) => {
+	return {
+		changeValueMessage: (text) => {
+			dispatch(changeValueMessageActionCreator(text));
+		},
+		addMessage: () => {
+			dispatch(addMessageActionCreater())
+		},
+	}
+}
+
+
+И в конце мы коннектим наш контейнер с отрисовывающей компонентой
+
+Это делается так
+
+1.Создадём переменную
+2. в connect в первые скобки передаём наш state(mapStateToProps) и dispatch(mapDispatchToProps)
+3. во вторых скобках указываем отрисовывающую компоненту
+const MessagesContainer = connect(mapStateToProps, mapDispatchToProps)(Messages);
+
+
+Огромный плюс connect
+Что он перерендреривает если нужно, свою компоненту
+а не как мы делали, типо функцией subscribe и т.д.
+То есть он сам СВОЮ ЧАСТЬ перерендреривает
+
+но есть свой минус
+
+каждый раз когда в state происходит изменения
+
+То вызывается mapStateToProps и сравнивается с предыдущим объектом и если изменился то рендерим
+или нет
+
+И вот минус, что он проверяет как его название или же поверхностно он изменился, а внутренности нет.
+И поэтому у нас и ошибка, мол он не перерендреривается
+
+
+И чтобы решить проблему, то в reducer нам нужно понять, что главное условие - мы не должны менять state то есть не имеем права изменять объекты
+И поэтому нужно делать копию просто так
+let copy = Object.assign({}, state);
+
+и с ним работать
+
+по сути мы return copy и вот тогда mapStateToProps уже видит что объект изменился, т.к. объект !== объект
+а mapStateToProps сравнивает текущий и предыдущий объект
+
+
+Это всё мьютабельность
+
+Сейчас я уже на 55 уроке,  и решил поменять AC с помощью switch структуры
+
+
+и вот столкнулся с проблемой, что я когда что-то меняю типо stateCopy.currentPage = action.id
+У меня не return stateCopy
+
+Сложно объяснить почему, и поэтому нам нужно всегда возваращать ту часть, где что-то изменилось и в нашем случае надо делать так
+
+
+return {...state, currentPage: action.id}
+
+сейчас мы на 58 уроке
+И тут лайфхак с mapDispatchToProps
+
+
+мы можем сократить mapDispatchToProps, таким образом
+
+let container = connect(mapStateToProps, {
+	follow,
+	unfollow,
+	...
+})
+
+А как же так работает, а потому что если в объекте ключ по названию равен значению, то можно просто указать ключ
+
+А ведь у нас action creator в конце написано AC
+
+Не проблема, уберём
+
+Еще вопрос, как тогда dispatch вызывается, а тут уже надо почитать статью
+
+Но если вкратце, то:
+
+Если в connect вторым параметром передать объект с колбеками, то connect сам их обвернёт в функцию dispatch
+
+и сам будет передавать action

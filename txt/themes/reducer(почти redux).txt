@@ -1,0 +1,52 @@
+Reducer
+ 
+тоже самое, что и компонента, мы наши функции dispatch
+Будем выносить в отдельные файлы
+
+Ну то есть у нас в dispatch было условие
+
+if (action.type === 'ADD'){
+	// И тут мы писали код
+}
+
+а если таких штук много, то лучше их выносить в reducer'ы
+
+допустим
+
+const profileReducer = (state, action) => {
+	if(action.type === 'ADD'){
+		state.messages.push(obj)
+	} else if(...){
+		...
+	}
+
+	return state
+}
+export default profileReducer;
+
+где state это то, что мы передаем в самом dispatch
+
+dispatch(action) {
+	this._state.profile = profileReducer(this._state.profile, action)
+
+	// то есть мы определённый фрагмент state обновили
+
+	//  и в конце
+
+	this._rerenderTree()
+}
+
+
+Сейчас я на 73 уроке и понял, зачем же нам копировать  state в редусерах
+
+
+а потому что redux при изменении стейта сравнивает текущий стейт и предыдущий а по сути это одинаковые стейты, они хранят один объект
+и поэтому если мы скопируем state то объект не будет равен другому объекту и поэтому мы можем либо делать таких
+
+stateCopy.newtext = action.value
+return stateCopy
+
+или просто  в одном return 
+
+
+return {...stateCopy, newtext: action.value}

@@ -1,0 +1,280 @@
+Как фронтенд разработчик я должен уметь писать тесты 
+
+И чтобы юзать тесты нужно в scripts добавить
+  "scripts": {
+    "test": "react-scripts test"
+  },
+И потом добавить это
+  "jest": {
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
+  },
+
+
+И чтобы вызвать тесты: yarn test
+
+UniTests 
+
+Это значит, что мы тестируем не всё приложение
+А только те части которые нужно, и причём каждую по отдельности
+
+А зачем же нужны тесты?
+
+1. Система работает стабильнее
+2. Тесты это некоторая инструкция (то есть знаем какой ответ должен прийти)
+
+
+Сейчас будем тестировать редусеры
+
+Для тестировки, нужно файлу сделать такое название 
+
+reducer.test.js 
+
+после вот пример:
+
+import profileReducer from "./profileReducer";
+
+it('profileReducer', () => {
+	// 1. test data
+	let state = {
+
+		postsData: [
+			{
+				"id": 1,
+				"From": 'Kirill',
+				"Message": 'Lorem'
+			},
+			{
+				"id": 2,
+				"From": 'Kirill2',
+				"Message": 'Lorem'
+			},
+			{
+				"id": 3,
+				"From": 'Kirill3',
+				"Message": 'Lorem'
+			},
+		],
+	}
+	// 2. action
+	const newState = profileReducer(state, { 'type': 'ADD-NEW-POST', name: 'name', text: 'loremTest' })
+
+	// 3. Expectation 
+	expect(newState.postsData.length).toBe(5)
+})
+Сначала оборачиваем тест в it('название теста', () => {
+	// тест 
+})
+
+И вот потом мы можем вызывать конкретный тест по этому названию
+
+Где пункт 1. это тестированные данные
+
+во втором мы вызываем reducer и он нам return state 
+
+в 3 пункте это Expectation то есть ожидаемые данные сравниваются с теми которые пришли из newState
+
+
+TDD - test driving development
+
+Тесты на то, чего еще нет
+
+то есть в редьюсере нету deletePost и вот на него мы пишем тест 
+то есть сначала как бы красная полоса (нету такого actionCreator) а потом пишем 
+сам actionCreator и уже зеленая полоса
+
+Также очень удобное расширение jest в vs code	
+оно выводит панель, где удобно можно запускать тесты 
+
+
+- Тестируем компоненты
+
+тестировать компоненты мы будем иначе, то есть у нас не будет никакого Expectation
+мы просто должны понять сработает ли коды
+
+и у нас App компонента не полноценная, она как бы не имеет Provider, который даёт всему приложению доступ к store
+
+и для этого проделаем это:
+
+1. В App компоненте сделаем ещё одну компоненту
+
+const AppContainer = compose(connect(mapStateToProps, mapDispatchToProps))(App)
+
+const MainApp = (props) => {
+	return <React.StrictMode>
+		<BrowserRouter >
+			<Provider store={store}>
+				<AppContainer /> {/* state={store.getState()} dispatch={store.dispatch.bind(store)} */}
+			</Provider>
+		</BrowserRouter>
+	</React.StrictMode>
+}
+
+export default MainApp
+
+2. В main.jsx эту компоненту отрисуем
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+root.render(
+	<MainApp />,
+)
+
+3. И создадим тест 
+
+import React from 'react'
+import ReactDOM from 'react-dom'
+import MainApp from './components/screens/App/App.jsx';
+
+it('renders without crashing', () => {
+	const div = document.createElement("div")
+	ReactDOM.render(<MainApp />, div)
+	ReactDOM.unmountComponentAtNode(div)
+})
+
+
+И теперь будем тестировать компоненту ProfileStatusWithHooks
+
+И нам понадобится библиотека:
+
+yarn add react-test-renderer --save-dev || npm i react-test-renderer --save-dev
+
+
+--save-dev нужен чтобы react-test-renderer установился в среду разработки
+
+Потому что всякие react vite и т.д. нужны только в разработке, так и надо с react-test-renderer
+т.к. он не нужен нам в браузере
+
+
+И для чего же нужна эта библиотека
+
+Чтобы тестого запускать компоненты, чтобы что-то из них грубо говоря получить (тестого с компонентой работать)
+
+
+Потом мы сделаем как бы коробочку, где будем писать тесты, это коробка describe
+
+import React from "react";
+import { create } from "react-test-renderer";
+
+describe("название", () => {
+
+});
+
+И нём создаём тест и указываем название 
+describe("название", () => {
+	test("status from props should be in the local state (useState)", () => {
+		const component = create(<Status text="SUBSCRIBE TO BASIC" />);
+		// Функция create запускает как-бы тестого саму компоненту (то есть её отрисовывает)
+	});
+});
+
+после нужен instanse или же данные которые придут после отрисовки компоненты 
+делается таким образом
+
+const instance = component.getInstance()
+
+и потом будем экспектить 
+
+
+expect(instance.state.text).toBe("text")
+
+Будем тестировать ProfileStatus 
+
+Для начала создадим тест 
+
+describe("ProfileStatus Components", () => {
+	test("status from props should be in the local state (useState)", () => {
+
+	});
+});
+
+после создадим компоненту с instance
+
+
+describe("ProfileStatus Components", () => {
+	test("status from props should be in the local state (useState)", () => {
+		const component = create(<ProfileStatus status="testSamurai" />);
+		const instance = component.getInstance();
+
+	});
+});
+
+и потом мы знаем что в компоненте придёт статус в local state
+и вот на него и сделаем expect
+
+describe("ProfileStatus Components", () => {
+	test("status from props should be in the local state (useState)", () => {
+		const component = create(<ProfileStatus status="testSamurai" />);
+		const instance = component.getInstance();
+		expect(instance.state.status).toBe("testSamurai");
+	});
+});
+
+
+также можно искать какой либо тег таким образом
+но instance должен быть таким
+const instance = component.root;
+
+
+span = instanse.findByType("тег")
+
+и можем проверить его содержимое
+
+
+expect(span.props.children).toBe("значение")
+
+
+Также есть аналог toBe, но противоположно:
+
+toBeNull
+
+чтобы элемент был null 
+
+или можно сделать чтобы НЕ БЫЛ null
+
+но нужно написать такую цепочку
+
+expect(span).not.toBeNull()
+чтобы span не был null
+
+также если мы знаем, что будет ошибка то делаем так
+
+expect(() => {
+	const mark = instance.findByType("mark");
+}).toThrow()
+
+
+
+Также можем вызывать клик 
+
+
+test("input should be displayed to editMode", () => {
+	const component = create(<ProfileStatus status="testSamurai" />);
+	const instance = component.root;
+	const button = instance.findByType('button')
+	button.props.onClick()
+	const input = instance.findByType('input')
+	expect(input.props.value).toBe('testSamurai')
+})
+
+
+Забыл отметить, что в create мы вызываем компоненту как обычно, и туда можем сувать любые пропсы, даже функции (колбеки)
+также чтобы проверить что коллбек вызвался, нужно использовать jest 
+
+
+вот допустим в компоненту мы передаём callback - updateStatus
+
+и мы можем кинуть в него ложную функцию
+
+const mockCallback = jest.fn()
+
+и потом в expect проверить 
+
+mockCallback.mock.calls.length.toBe(1)
+то есть сколько раз вызвали эту функцию
+
+или можем из instance вызывать функции которые в компоненте
+
+const instance = component.getInstance()
+instance.setDisabledEditMode()

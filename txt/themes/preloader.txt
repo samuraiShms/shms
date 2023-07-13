@@ -1,0 +1,25 @@
+Когда мы что либо получаем с сервера, проходит какое либо время, и в этом время мы можем вывести некий
+Preloader или же гифка которая скажет
+Что данные загружаются
+
+
+И значит в state должен быть какой либо звоночек, который скажет, выводить ли Preloader
+
+И допустим назовём его isFetching
+И если он true, мы должны выводить preloader а если данные пришли, то выводим данные
+
+вот пример
+
+
+return (
+	{ this.props.isFetching ? <img src="preloader.gif" alt="Loading..."/> : <Component /> }
+)
+
+а там где получаем данные будем сначала isFetching передавать true (данные идут)
+а когда пришли false
+
+isFetching = true
+axios.get('url').then(res => {
+	isFetching = false
+	return res.data
+})

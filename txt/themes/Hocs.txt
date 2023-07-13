@@ -1,0 +1,118 @@
+WithRouter
+
+Хок WithRouter используется для того, чтобы получить url страницы 
+
+Это по сути тоже самое что и connect а я напомню connect
+это когда отрисовываем чистую компоненту и передаём какие либо данные из store
+
+А WithRouter тоже самое делает, только передает данные из url
+
+Но в react router v6 нету этого, т.к. заменили на хуки, но можно написать свой WithRouter
+
+function withRouter(Component) {
+  function ComponentWithRouterProp(props) {
+    let location = useLocation();
+    let navigate = useNavigate();
+    let params = useParams();
+    return (
+      <Component
+        {...props}
+        location={location}
+        params={params}
+        navigate={navigate}
+      />
+    );
+  }
+}
+
+И вот сейчас нам нужно нажимать на странице пользователей на его имя, и перекидывать на профиль, это можно легко сделать:
+
+
+закинем нашу компоненту в withRouter а потом в connect
+
+и уже в компоненте будет params location navigate и нам нужен params, параметры в url, это то что после : (не в самом браузере, а в коде)
+
+пример: 
+
+url = 'https://api/users/:userId' и в route мы можем такой путь поставить, он будет означать, что профиль откроется только тогда, когда
+в url будет profile/и параметр userId, а если не будет userId мы можем тоже открывать профиль, но мы должны поставить вот так 'https://api/users/:userId?'
+
+а потом создадим функцию которая будет получать в dispatch данные текущего пользователя, для вывода его профиля
+
+а еще преджевременно в странице users поставим navLink на каждый заголовок usera, чтобы он переходил на свой профиль, а путь такой: /profile/айди текущего профиля 
+а потом с помощью axios будем получать users из апишки, и циклом проходить по data items и искать нужного usera а потом уже дальше понятно
+
+
+Мы даже не поговорили про сами хоки, сейчас и обсудим:
+мы остановились на redirect на страницу логина, и вот в каждой компоненте писать redirect это слишком много responsibillity на
+презентационную компоненту, поэтому эту проблему нужно как-то решать
+
+И на помощь нам придёт хоки (hocs)
+Hocs - high order component (компоненты высшего порядка)
+
+Hoc - это фукнция которая принимает одну компоненту, и возвращает другую компоненту
+
+и вот в нашем случае я создал классную, переиспользуемый хок:
+
+import { Navigate } from "react-router-dom"
+const hocRedirectToLogin = (Component) => {
+
+	const ContainerComponent = (props) => {
+		if (props.isAuth == false) {
+			return <Navigate to='/login' />
+		} else {
+			return <Component {...props} />
+		}
+	}
+
+	return ContainerComponent
+}
+
+export default hocRedirectToLogin
+
+Только единственное условие, он должен получить компоненту, то есть в connect должно быть так
+
+connect()(hocRedirectToLogin(Messages))
+
+и в mapStateToProps главное не забыть передать isAuth и он получается прилетит в hocRedirectToLogin а там уже передаст в Messages
+
+
+А если я хочу забывать передавать isAuth, то есть чтобы он сам был в хоке, как это сделать?
+
+то мы можем в самом хоке коннектить компоненту к store 
+
+и напоминаю, connect существует чтобы связать контейнерную компоненту с store
+
+И вот так мы сделаем
+let mapStateToProps = (state) => {
+  return {
+    isAuth: state.auth.isAuth
+  }
+}
+const connectedComponent = connect(mapStateToProps, {})(ContainerComponent)
+
+return connectedComponent
+
+и мы коннектим два раза, и еше и хок вызываем и по сути у нас как будто конвеер,
+поэтому будем использовать Compose
+
+
+compose(
+  redirectToLogin
+)(Messages)
+
+И вот как работает, сначала закинет Messages в redirectToLogin, потом вернёт результат и закинет в следующую функцию
+И важно понять, что 'конвеер' начинается с конца, т.е. redirectToLogin, потом connect и т.д.
+
+compose(
+  connect(mapStateToProps, mapDispatchToProps),
+  redirectToLogin
+)(Messages)
+
+То есть чтобы не делать так:
+
+let auth = redirectToLogin(Messages)
+let container = connect(mapStateToProps, mapDispatchToProps)(auth)
+
+А ведь может быть больше, так что это удобно
+

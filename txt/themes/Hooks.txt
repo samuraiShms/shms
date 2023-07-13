@@ -1,0 +1,121 @@
+Хуки 
+
+Правила хуков
+
+1. Нельзя в использовать в условии
+
+2. В циклах нельзя
+
+useState
+
+позволяет хранить состояние 
+
+заменяет localState 
+
+
+возвращает массив из двух значений
+
+первое: значение
+второе: функция чтобы менять это значение 
+
+и по дефолту можно передать в сам хук начальное значение и всё это будет выглядеть так:
+
+
+const editMode = useState(false)
+
+const editModeState = editMode[0]
+const setEditMode = editMode[1]
+
+
+И при вызове setEditMode и если что-то туда передадим, то в editModeState поменяется значение 
+
+
+Но можно использовать другую запись
+
+const [editMode, setEditMode] = useState(false)
+
+это по сути тоже самое
+
+забыл сказать что функции изменяющие этот state начинаются обычно с set 
+
+У нас в localState был editMode и status, и они менялись по отдельности поэтому с помощью хуков
+стало более правильно, что они меняются по отдельности и хранятся по отдельности
+
+
+useEffect 
+
+также как componentDidMount
+срабатывает после отрисовки jsx
+и в него тоже можно херачить side effect
+
+и useEffect тоже как componentDidUpdate срабатывает после каждой отрисовки jsx
+
+а если мы хотим сказать: useEffect отрисовывайся только после ...
+
+то мы можем передать массив зависимостей, то есть того, от чего будет отрисовываться useEffect
+
+и всё будет выглядеть данным образом
+
+useEffect(() => {
+	setEditMode(false)
+}, []) //Сам массив зависимостей
+
+и если он пустой, то useEffect работает как componentDidMount 
+если не передавать массив зависимостей то будет componentDidUpdate
+
+
+
+useMemo
+
+например есть массив отфильтрованных машин
+
+const filteredCars = cars.filter(car => car.price < 10000)
+
+и при перерисовке компоненты 
+
+будет заново вызываться filter и чтобы это сохранить/закешировать
+нужно обвернуть в хук useMemo данным образом
+
+const filteredCars = useMemo(() => cars.filter(car => car.price < 10000), [])
+
+useCallback
+
+так же как и с useMemo только с функцией - мы не должны постоянно её создавать
+поэтому обвернём в useCallback
+
+const handle = useCallback(() => {
+	console.log('handle')
+}, [])
+
+разница между useCallback и useMemo
+
+UseCallback и useMemo предназначены для оптимизации. useCallback получает на функцию и массив аргументов, 
+и возвращает одну и туже функцию, до тех пор, пока аргументы не изменились.
+useMemo отличается тем, что он возвращает не саму функцию, а результат её выполнения.
+
+Разница в месте вызова
+useMemo вызывается исходниками React'а, а useCallback - мы. Примеры обоих функций:
+
+useContext
+
+
+сейчас можно вместо этого <MyContext.Consumer></MyContext.Consumer>
+использовать хук useContext таким образом
+
+let value = useContext(MyContext);
+
+и обращаться к value которое сидит в MyContext
+
+
+
+
+Чтобы заменить метод жизненного цикла componentWillUnmount
+
+можно использовать useEffect
+
+useEffect(() => {
+	return () => {
+		console.log('unmount')
+	}
+	// Вот эта функция будет работать как componentWillUnmount
+}, [])

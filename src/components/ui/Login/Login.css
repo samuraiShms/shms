@@ -1,0 +1,35 @@
+.form-login {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.login {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-height: 100%;
+	justify-content: center;
+	flex: 1 1 auto;
+	min-width: 100%;
+}
+
+.form-login__title {
+	margin-bottom: 10px;
+	color: #fff;
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.form-login__item {
+	min-width: 320px;
+}
+
+.form-login__input {
+	min-width: 320px;
+}
+
+.form-login__button button {
+	width: 100%;
+	min-width: 100%;
+}

@@ -1,0 +1,89 @@
+
+
+Галочка в любой форме обычно означает жизнь куки, а куки, это данные
+
+Например с логином, мы передаём на сервак логин и пароль, и если они верны, они возрвращаются к нам, и записываются в браузер - это куки
+
+И вот галочка означает продолжительность жизни куки
+
+
+
+Теперь мы сделаем полноценный логин
+
+
+Для начала создадим API 
+
+он будет такой 
+
+const API = {
+	login: (email, password, rememberMe = false) => {
+		return instanse.post('/login', {email, password, rememberMe})
+	},
+	logout: () => {
+		return instanse.delete('/login')
+	},
+	getDataLogin: () => {
+		return instanse.get('login/me')
+	}
+}
+
+Далее создадим санки для входа выхода и получения данных нашего логина с апишки
+и напоминаю аккаунт на который мы будем заходить с нашей соц сети он есть на апишке и поэтому getDataLogin получает эти данные 
+
+login будет такой
+const login = (email, password, rememberMe) => {
+	return (dispatch) => {
+		API.login(email, password, rememberMe).then(response) => {
+			dispatch(getDataLoginThunk())
+		}
+	}
+}
+const logout = () => {
+	return (dispatch) => {
+		API.logout().then(response => {
+				dispatch(auth(null, null, null))
+		})
+	}
+}
+getDataLogin (где получаем данные) будет такой
+const getDataLoginThunk = () => {
+	return (dispatch) => {
+		API.getDataLogin().then(response => {
+			dispatch(auth(response.login, response.email, response.id))
+		})
+	}
+}
+
+Также в state у нас хранится login, email, id 
+
+login мы будем выводить допустим в header если мы залогинились
+email мы просто получаем
+а id чтобы через пропсы прокинуть допустим в sidebar и там на NavLink повесить to={`/profile/${id}`}
+
+также не забываем про redirect, для этого создадим хок
+
+const mapStateToProps = (state) => {
+	return {
+		isAuth: state.auth.isAuth,
+		id: state.auth.id
+	}
+}
+const redirectToProfile = (Component) => {
+	const container = (props) => {
+		if (props.isAuth) {
+			return <Navigate to={`/profile/${props.id}`} />
+		} else {
+			return <Component {...props} />
+		}
+	}
+
+
+	return connect(mapStateToProps, null)(container)
+}
+
+export default redirectToProfile
+
+ну и если мы не залогинены тоже нужно сделать redirect с profile на login 
+
+
+

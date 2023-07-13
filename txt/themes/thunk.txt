@@ -1,0 +1,82 @@
+thunk
+
+Это функция которое выполняет допустим 3 действия одновременнл
+
+например 
+
+у нас при загрузке пользователей выполняется
+1. Ставится крутилка
+2. Загружаются пользователи
+3. Выключается крутилка
+
+И вот можно это засунуть в 1 функцию это и будет thunk
+
+thunk = () => {
+	setLoad()
+	setUsers()
+	removeLoad()
+}
+
+Вкратце
+
+Санка это функция которая диспатчит внутри себя другие actions
+
+
+
+А теперь синтаксис
+
+Сначала функция thunk будет принимать dispatch чтобы диспатчить то, что внутри
+export const thunk = (dispatch) => {
+	// Внутри же просто будет что-либо диспатчить
+	dispatch(setUsers())
+}
+
+А если будет так, что у нас в одном из диспатче, приходят какие-либо параметры из вне
+
+то есть так
+export const thunk = (dispatch) => {
+	dispatch(setUsers(quantity)) // quantity
+}
+
+То мы можем воспользоваться замыканием
+
+Замыкание - это функция, которая получает параметры, и возваращает другую функцию, в которой есть доступ к этим параметрам
+
+пример
+
+export const thunkCreator = (quantity) => { 
+	return (dispatch) => {
+		dispatch(setUsers(quantity)) // quantity
+	}
+}
+И да, это называется thunkCreator's
+
+
+И вот небольшой финальный код
+export const getUsersThunkCreator = (pageNumber, pageSize) => {
+	return (dispatch) => {
+		dispatch(toggleIsFetching(true))
+		getUsers(pageNumber, pageSize).then(response => {
+			dispatch(toggleIsFetching(false))
+			dispatch(setTotalCount(response.data.totalCount / 1000))
+			dispatch(setUsers(response.data.items))
+		})
+	}
+}
+
+И дальше нюанс, redux в dispatch принимает только action, а как передать то наш thunk
+А тут надо импортировать redux-thunk а дальше делаем это: 
+
+Импортируем thunk 
+import ThunkMiddleware from "redux-thunk";
+
+дальше импортируем 
+applyMiddleware
+import { applyMiddleware } from 'redux';
+
+а дальше 
+
+let store = createStore(reducers, applyMiddleware(ThunkMiddleware));
+
+а applyMiddleware это как бы конвеер который проверяет action, функция ли он, и если да
+значит это thunk и он её вызывает,а там уже всё диспатчится

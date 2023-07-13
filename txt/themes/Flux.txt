@@ -1,0 +1,112 @@
+Flux - суть в том, что наш UI зависит от BLL
+ 
+То есть самое главное условие - UI ДОЛЖЕН ЗАВИСИТЬ ОТ STATE(BLL/REDUX)
+
+Ui - user interface (React)
+Также Ui это тупая компонента, то есть ей сказали она отрисовала
+
+BLL - Business Logic Layer
+
+BLL - это то, где мы будем хранить state, данные, которые будем перекидывать
+Через пропсы в свою компоненту
+
+Также Flux это цикл, когда Ui даёт данные в state (BLL) и т.к. Ui зависит от BLL
+То BLL опять перерендеривает и опять уже с новыми данными
+
+Возьмём пример с input'ом
+
+
+
+И инпута мы поставим фиксированное value
+
+допустим 
+<input type="text" value="text" />
+
+Но в консоле выдаст ошибку, мол нам нужно использовать обработчик onChange
+
+Поэтому мы будем хранить значение input - value 
+В state (BLL/Redux) то есть к элементу где хранится наш input допустим posts
+Туда поставим элемент объекта valueInput: 'text' и с помощью пропсов перекинем в компонент с данным инпутом
+
+И там же создадим функцию, которую будем вызывать на input'е при onChange
+
+changeValue: (value) => {
+	state.posts.valueInput = value;
+	// То есть будем присваивать valueInput value, которое мы получим при change на инпуте
+}
+
+
+<input type="text" onChange={() => { props.changeValue() }} value="props.valueInput" />
+
+А как же получить value с инпута?
+
+можно использовать e.target.value
+
+А можно создать типо React ссылку, которая будет ссылаться на input и получать его значение
+
+const textEvent = React.createRef();
+Вот мы создали ссылатель
+
+Теперь назначем инпуту
+<input type="text" ref={textEvent} onChange={() => { props.changeValue() }} value="props.valueInput" />
+
+То есть просто ставим атрибут ref и переменную, в которой хранится ссылатель
+
+Далее, чтобы получить value - textEvent.current.value
+
+<input type="text" ref={textEvent} onChange={() => { props.changeValue(textEvent.current.value) }} value="props.valueInput" />
+
+
+И также самое главное это перерендеривание, то есть когда мы будем выполнять функцию changeValue мы просто будем перекидывать в valueInput текст,  
+Который вводим в input, но так как наш Ui зависит от state(BLL/REDUX) то нам надо перерендеривать
+(P.S. пока так)
+
+И чтобы это сделать, создадим отдельный файл render.jsx
+В который поместим: 
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+export let rerenderTree = (state) => {
+	root.render(
+		<React.StrictMode>
+				<App state={state} />
+		</React.StrictMode>,
+	)
+
+}
+
+
+И также в других файлах импортируем rerenderTree
+
+То есть в state и в main.jsx и там при вызове будем передавать state
+
+Таким образом мы будем перерендеривать приложение
+
+Урок (35 - 39)
+Но теперь мы можем пользоваться функциями колбеками
+и в state.jsx создадим функцию которая получит колбек функцию из main.jsx
+
+А тем временем наш render реакта щас находится в main.jsx
+ 
+и из state мы импортируем функцию которая получит колбек
+
+Но преждевременно мы в state.jsx добавим переменную,которая будет хранить колбек функцию
+А сама функция, которая будет получать колбек, будет выглядеть так:
+
+
+let helper = (callback) => {
+	переменная которая будет хранить колбек = callback
+}
+
+и далее переменную которая хранит колбек можем вызывать где нам нужно в state.jsx
+И еще мы избавились от циклической зависимости
+
+
+но преждевременно мы в main.jsx должны импортировать helper и передать функцию
+которая перерендеривает реакт
+
+import { helper } from 'state.jsx'
+
+helper(rerender)
+
+

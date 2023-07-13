@@ -1,0 +1,44 @@
+
+установаить gh-pages 
+
+
+yarn add gh-pages --dev
+
+npm i gh-pages --save-dev
+
+Локальный репозиторий - это папка на вашем компьютере. 
+Коммит - это некая совокупность изменений, сделанных вами, которая будет отправлена в удаленный репозиторий.
+Коммитить - по сути значит сохранять изменения.
+Проиндексировать изменения - выполнить команду, которая выберет какие файлы мы будем коммитить.
+
+On git in vs code 
+git init
+Off git in vs code
+rm -rf .git
+
+0. Добавление homepage в package.json
+https://samuraishms.github.io/samuraiShms
+
+
+Клонирование
+1. git clone https://github.com/samuraiShms/samuraiShms.git
+
+Добавление 
+2. git add .
+
+Коммит
+3. git commit -am "название"
+
+Push in git repository
+4. git push
+
+Проверить статус
+5. git status
+
+6. gitk -all$
+
+7. в package.json нужно добавить скрипты
+"scripts": {
+   "predeploy": "npm run build",
+   "deploy": "gh-pages -d build"
+}

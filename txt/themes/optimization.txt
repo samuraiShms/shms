@@ -1,0 +1,117 @@
+Оптимизация
+
+
+сейчас у нас такая фигня, что при обновлении приложения у нас на секунду мелькает login потом profile 
+
+А это плохо
+
+мы должны чётко сделать: 
+
+Проверяем залогинены ли мы, и делаем действия
+
+
+вот так:
+
+import { getDataLoginThunkCreator } from "./authReducer";
+
+const INITIALIZE_APP = 'INITIALIZE_APP';
+const initialState = {
+	initilize: false
+}
+
+const appReducer = (state = initialState, action) => {
+	const stateCopy = Object.assign({}, state)
+	switch (action.type) {
+		case INITIALIZE_APP:
+			return { ...state, initilize: true }
+		default:
+			return stateCopy
+	}
+}
+const initializeSuccess = () => { return { 'type': INITIALIZE_APP } }
+export const initilizingApp = () => {
+	return (dispatch) => {
+		let loginData = dispatch(getDataLoginThunkCreator())
+		console.log(loginData)
+		Promise.all([
+			loginData
+		]).then(() => {
+			dispatch(initializeSuccess())
+		})
+	}
+}
+
+export default appReducer
+
+и там где получаем getDataLoginThunkCreator, там нужно вернуть промис, то есть так 
+
+
+
+export const getDataLoginThunkCreator = () => {
+	return (dispatch) => {
+		return usersAPI.getDataLogin().then(response => {
+			if (response.data.resultCode == 0) {
+				dispatch(authToProfile(response.data.data.login, response.data.data.email, response.data.data.id, true))
+			}
+		})
+	}
+}
+
+
+
+- shouldComponentUpdate
+
+суть в том, что при отрисовке, мы должны задавать компоненте вопрос:
+
+Ты должна перерисоваться?
+
+а если она отвечает:
+
+Нет, я верну тот же jsx не надо меня перерисовывать
+ 
+
+А с чего она будет много раз перерисовываться?
+А потому что, её родитель перерисовывается, следовательно и она сама
+
+И чтобы это всё дело оптимизировать то будем использовать классовую компоненту 
+
+
+для этого есть метод жизненного цикла shouldComponentUpdate
+
+и его нужно добавить в класс 
+
+
+class Profile extends React.Component {
+	shouldComponentUpdate(nextProps, nextState){
+
+		// В него приходит следующие пропсы и state и мы можем сравнить текущие с следующими
+		// и если они не равны, то отрисосываем или ничего
+
+		return nextProps != this.props
+	}
+}
+А return мы делаем для того, чтобы сам React получил ответ (false/true) и если false - не отрисовываем
+
+И что такое pure component это компонента которая делает эту проверку за нас
+
+это тоже класс, который экстендится от PureComponent из реакта
+
+class Profile extends React.PureComponent {
+	// И тут он сам будет делать эту проверку 
+
+
+	...
+}
+
+
+Но если мы хотим не пользоваться классовой компонентой
+То нам поможет React.memo
+
+просто обвернуть что нужно в memo данным образом
+
+const Component = memo(props => {
+	return <div>
+		hello
+	</div>
+})
+И там по сути будет наша проверка

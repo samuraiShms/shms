@@ -1,0 +1,235 @@
+Классовые компоненты
+
+
+{
+	'articles': 'articles',
+	'about_class':  'https://learn.javascript.ru/class',
+	'inheritance_class': 'https://learn.javascript.ru/class-inheritance',
+}
+
+
+class User {
+	
+}
+
+В React у классов должно обязательно быть extends React.Component
+Чтобы подключился API React к классу
+
+class User extends React.Component {
+
+}
+
+
+каждый класс ещё должен определить метод render ( он возвращает jsx )
+
+
+class User extends React.Component {
+
+
+	render() {
+
+		// И вот метод render будет возвращать jsx
+
+		return (
+			<>
+				Hi
+			</>
+		)
+	}
+}
+
+
+Также если мы создаём какую-либо функцию в классе то ни let ни const не нужен
+Просто пишем без const / let / var
+
+class User extends React.Component {
+	
+// Вот так
+	getUsers = () => {
+		console.log(this.props.users)
+	}
+
+	render() {
+
+		return (
+			<>
+				Hi
+			</>
+		)
+	}
+}
+
+
+А откуда props взялись?
+
+они заэкстендились от React.Component
+
+Можно и написать конечно это, но по умолчанию когда класс экстендится от чего либо, то он по умолчанию наследует constructor
+constructor(props) {
+	super(this.props)
+}
+также super означает родитель или же класс который наследуется
+
+ 
+Если вкратце про пропсы, то в React.Component пропсы автоматически делаются (пока как я понял)
+и мы просто обращаемся к ним через this.props
+
+Либо можем изменить название
+constructor(state) {
+	super(state)
+}
+И тем самым уже не props, а state
+
+
+И вот зачем же нам классовые компоненты
+
+Вот у нас проблема, мы с сервера получаем Users и выводим их в state прямо в функциональной компоненте
+
+Но она должна быть презентационной
+
+И поэтому мы её переделаем на классовую компоненту
+И еще плюсом, нам не придётся добалять проверки, т.к. мы получим Users один раз
+
+
+как же это сделать
+
+
+обворачиваем нашу компоненту в класс
+class Users extends React.Component {
+	// Далее создадим метод render, дабы вернуть jsx, render в классовой компоненте должен быть обязательно
+	render(){
+		return (
+		 // Чуть позже заполним
+		)
+	}
+
+	// Далее опишем логику получения с сервера
+	// И тут можно выбрать два метода (подробнее в axios.txt)
+	// Мы выберем с помощью async функции
+if (this.props.usersData.length === 0){
+	const fecthData = async () => {
+	let response = await axios.get("http://localhost:3000/users")
+	//Получим response
+	this.props.setUsers(response.data)
+	// Загрузим users
+fecthData()
+	P.S Также забыл упомянуть про пропсы, они заэкстендились сами поэтому мы просто пишем this.props ...
+	}
+}
+
+И вот вроде бы всё ок
+
+Но нам нужно вызвать это дело один раз
+
+И еще условие (this.props.usersData.length === 0) убрать желательно
+P.S Напомню это условие, чтобы избежать бесконечной подгрузки с сервера, то есть один раз чтобы подгрузить
+
+
+Ага, проблема
+
+Нам нужно эту логику засунуть в constructor
+А почему же один раз сработает, а потому что конструирование класса происходит один раз
+
+constructor(props){
+	super(props)
+	// Не забываем кинуть пропсы
+
+// И тут описываем нашу логику без условия
+	const fecthData = async () => {
+		let response = await axios.get("http://localhost:3000/users")
+		this.props.setUsers(response.data)
+		fecthData()
+	}
+}
+
+Ну и можно метод render заполнить 
+
+
+render(){
+	{this.props.usersData.map(user => (
+		<UserItem follow={this.props.follow} unfollow={this.props.unfollow} user={user} key={user.id} />
+	))}
+}
+}
+Вот и всё.
+
+
+
+И теперь мы можем использовать жизненный цикл:
+
+componentDidMount() {
+		const fecthData = async () => {
+		let response = await axios.get("http://localhost:3000/users")
+		this.props.setUsers(response.data)
+		}
+		fecthData()
+}
+
+Это специальный жизненный цикл чтобы использовать side effect
+
+И этот метод срабатывает тогда когда внедряется в html jsx
+
+Например еще 
+componentDidDelete или как то так, оно означает что сейчас удалится
+
+
+API CONTAINER
+Мы сделали пагинацию, но теперь наша функция не презентационная, т.к. в ней есть side effect (ajax)
+
+И нам нужно по сути сделать дополнительную контейнерную компоненту которая будет обрабатывать ajax и т.д.
+
+А почему же не в самой первой контейнерной компоненте сделать это, а потому, что там нет классовой компоненты
+
+И сделаем апишную компоненту UsersAPIComponent.jsx
+в ней будет класс
+
+
+
+
+class UsersAPIComponent extends React.Component {
+
+	getData = (pageNumber) => {
+		axios.get(`https://social-network.samuraijs.com/api/1.0/users?page=${pageNumber}&count=${this.props.users.pageSize}`).then(response => {
+			this.props.setTotalCount(response.data.totalCount / 1000)
+			this.props.setUsers(response.data.items)
+		}).catch(error => {
+			console.log(error)
+		})
+	}
+	componentDidMount() {
+		this.getData(this.props.users.currentPage)
+	}
+
+	render() {
+		return <Users users={this.props.users.usersData}
+			setCurrentPage={this.props.setCurrentPage}
+			getData={this.getData} showMore={this.props.showMore}
+			currentPage={this.props.users.currentPage}
+			totalCount={this.props.users.totalCount}
+			pageSize={this.props.users.pageSize}
+			follow={this.props.follow}
+			unfollow={this.props.unfollow}
+
+		/>
+	}
+
+}
+
+export default UsersAPIComponent
+
+В которой будет getData там мы получаем пользователей
+Потом метод жизненного цикла componentDidMount который будет срабатывать при вызове метода render в классовой компоненте
+
+
+И тут выбор, либо вынести апишную контейнерную компоненту в другой файл, либо писать в основной контейнерной компоненте
+
+Впринципе и так и так будет нормально
+
+
+Хорошо, мы вынесли в отдельный файл допустим, и в основной контейнерной будем передавать туда пропсы из store
+а после в апишной компоненте будем передавать ТОЛЬКО НУЖНЫЕ ПРОПСЫ в презентационную компоненту
+
+Причём подмечу, НУЖНЫЕ, не надо ничего лишнего добавлять
+
+и поэтому в методе render апишной компоненты засунем вызов презентационной компоненты Users и передадим туда пропсы
+
